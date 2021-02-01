@@ -2,6 +2,7 @@
 
 namespace MacsiDigital\API\Support;
 
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Str;
 use MacsiDigital\API\Dev\Api;
 use MacsiDigital\API\Exceptions\HttpException;
@@ -236,6 +237,13 @@ class Builder
         return $this->request->$method(...$attributes);
     }
 
+    /**
+     * @param Response $response
+     * @param string $type
+     * @param string $ifEmpty
+     * @return mixed|null
+     * @throws \Illuminate\Http\Client\RequestException
+     */
     public function handleResponse($response, $type = "individual", $ifEmpty = "default")
     {
         if ($this->raw) {
@@ -245,10 +253,15 @@ class Builder
         } elseif ($response->getStatusCode() == 404) {
             return $this->handle404($response, $ifEmpty);
         } else {
-            throw new HttpException($response->status(), $this->prepareHttpErrorMessage($response));
+            $response->throw();
         }
     }
 
+    /**
+     * @param Response $response
+     * @return Response
+     * @throws \Illuminate\Http\Client\RequestException
+     */
     public function handleRaw($response)
     {
         if (! $this->throwExceptionsIfRaw) {
@@ -256,18 +269,22 @@ class Builder
         } elseif ($response->successful()) {
             return $response;
         } else {
-            throw new HttpException($response->status(), $this->prepareHttpErrorMessage($response));
+            $response->throw();
         }
     }
 
+    /**
+     * @param Response $response
+     * @param string $ifEmpty  If set to 'allow', method returns null, otherwise throws RequestException
+     * @return null
+     * @throws \Illuminate\Http\Client\RequestException
+     */
     public function handle404($response, $ifEmpty)
     {
         if ($ifEmpty == 'allow') {
             return null;
-        } elseif ($ifEmpty == 'error') {
-            return $response->throw();
         } else {
-            throw new HttpException($response->status(), $this->prepareHttpErrorMessage($response));
+            return $response->throw();
         }
     }
 

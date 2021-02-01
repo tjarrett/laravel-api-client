@@ -87,7 +87,7 @@ List of Attributes
     protected $defaultOperand = '=';
 ```
 
-Most of these are self-explanatory, there is a magic method attribute in there, if we return raw data than we receive the actual response without any error checking.  if we set $throwExceptionsIfRaw = true, then we still receive raw data, but it will check to make sure the return was successful and not an error. If we receive an error it will throw a HttpException.  You can also set this on teh fly by calling with Exceptions() on a query.
+Most of these are self-explanatory, there is a magic method attribute in there, if we return raw data than we receive the actual response without any error checking.  if we set $throwExceptionsIfRaw = true, then we still receive raw data, but it will check to make sure the return was successful and not an error. If we receive an error it will throw a \Illuminate\Http\Client\RequestException.  You can also set this on the fly by calling with Exceptions() on a query.
 
 In your extended Entry model implementation you have to define a newRequest function, this is where the logic for how we 1connect will go and should return a MacsiDigital\API\Support\Factory object, which is better renamed to Client in your implementation, which will resolve the API Gateway Client.
 
@@ -306,19 +306,19 @@ If you would like to receive the raw response from the query then set raw on the
 
 ## Http Errors
 
-If there are any errors returned from our call and the response is not set to raw then we will throw a new Http Exception.  We have some default behaviour but different APIs have different responses to errors.  So you can override the prepareHttpErrorMessage() method on the builder model to customise the Exception message.
+If there are any errors returned from our call and the response is not set to raw then we will throw a new Exc\Illuminate\Http\Client\RequestException.  We have some default behaviour but different APIs have different responses to errors.  So you can override the prepareHttpErrorMessage() method on the builder model to customise the Exception message.
 
 ```php
-	$json = $response->json();
-	if($json['Type'] == 'ValidationException'){
-		$message = $json['Message'];
-		foreach($json['Elements'][0]['ValidationErrors'] as $error){
-			$message .= ' : '.$error['Message'];
-		}
-    	return $message;
-	} else {
-    	return $json['Message'];
-	}
+$json = $response->json();
+if($json['Type'] == 'ValidationException'){
+    $message = $json['Message'];
+    foreach ($json['Elements'][0]['ValidationErrors'] as $error) {
+        $message .= ' : '.$error['Message'];
+    }
+    return $message;
+} else {
+    return $json['Message'];
+}
 ```
 
 ## Models
@@ -867,19 +867,19 @@ To save its as simple as calling the save() function.
 	$user->save();
 ```
 
-THe model will see if it already exists and call the correct insert or update method.  If updating we will only pass dirty attributes to the persistence model.
+The model will see if it already exists and call the correct insert or update method.  If updating we will only pass dirty attributes to the persistence model.
 
 You can also utilise other laravel methods like make, create and update directly in the model.
 
 We pass back helpful exceptions if it fails due to the API rejecting it. For example some APIs will have unusual rules, in Xero you can only pass multiple contacts if you supply email addresses, in this case we would get back an exception:-
 
 ```bash
-MacsiDigital/API/Exceptions/HttpException with message 'A validation exception occurred : Additional people cannot be added when the primary person has no email address set.'
+\Illuminate\Http\Client\RequestException with message 'A validation exception occurred : Additional people cannot be added when the primary person has no email address set.'
 ```
 
 ## Deleting
 
-To delete we would just call the delete function, this will return true if it deleted or throw a HttpException if there was an error.
+To delete we would just call the delete function, this will return true if it deleted or throw a \Illuminate\Http\Client\RequestException if there was an error.
 
 ```php
 	$user->delete();
